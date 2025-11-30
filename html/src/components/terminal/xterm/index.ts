@@ -309,7 +309,7 @@ export class Xterm {
         this.socket = new WebSocket(this.options.wsUrl, ['tty']);
         const { socket, register } = this;
 
-        socket.binaryType = 'arraybuffer';
+        // socket.binaryType = 'arraybuffer';
         register(addEventListener(socket, 'open', this.onSocketOpen));
         register(addEventListener(socket, 'message', this.onSocketData as EventListener));
         register(addEventListener(socket, 'close', this.onSocketClose as EventListener));
