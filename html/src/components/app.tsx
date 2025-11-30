@@ -9,7 +9,12 @@ const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const path = window.location.pathname.replace(/[/]+$/, '');
 const urlParams = new URLSearchParams(window.location.search);
 const waitForPostMessage = urlParams.get('waitForPostMessage') === 'true';
-const wsUrl = [protocol, '//', window.location.host, path, '/ws', window.location.search].join('');
+
+// Remove client-only parameters from WebSocket URL
+const wsParams = new URLSearchParams(window.location.search);
+wsParams.delete('waitForPostMessage');
+const wsQueryString = wsParams.toString();
+const wsUrl = [protocol, '//', window.location.host, path, '/ws', wsQueryString ? '?' + wsQueryString : ''].join('');
 const tokenUrl = [window.location.protocol, '//', window.location.host, path, '/token'].join('');
 const clientOptions = {
     rendererType: 'webgl',
