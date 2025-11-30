@@ -7,6 +7,8 @@ import type { ClientOptions, FlowControl } from './terminal/xterm';
 
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const path = window.location.pathname.replace(/[/]+$/, '');
+const urlParams = new URLSearchParams(window.location.search);
+const waitForPostMessage = urlParams.get('waitForPostMessage') === 'true';
 const wsUrl = [protocol, '//', window.location.host, path, '/ws', window.location.search].join('');
 const tokenUrl = [window.location.protocol, '//', window.location.host, path, '/token'].join('');
 const clientOptions = {
@@ -62,6 +64,7 @@ export class App extends Component {
                 clientOptions={clientOptions}
                 termOptions={termOptions}
                 flowControl={flowControl}
+                waitForPostMessage={waitForPostMessage}
             />
         );
     }

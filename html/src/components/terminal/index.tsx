@@ -7,10 +7,12 @@ import { Modal } from '../modal';
 
 interface Props extends XtermOptions {
     id: string;
+    waitForPostMessage?: boolean;
 }
 
 interface State {
     modal: boolean;
+    terminalInitialized: boolean;
 }
 
 export class Terminal extends Component<Props, State> {
@@ -26,9 +28,22 @@ export class Terminal extends Component<Props, State> {
         // Listen for postMessage from parent window
         window.addEventListener('message', this.handlePostMessage);
 
+        if (!this.props.waitForPostMessage) {
+            // Normal flow: initialize terminal immediately
+            await this.initializeTerminal();
+        }
+        // If waitForPostMessage is true, we wait for the postMessage event
+        // to trigger initialization via handlePostMessage
+    }
+
+    @bind
+    async initializeTerminal() {
+        if (this.state.terminalInitialized) return;
+
         await this.xterm.refreshToken();
         this.xterm.open(this.container);
         this.xterm.connect();
+        this.setState({ terminalInitialized: true });
     }
 
     componentWillUnmount() {
@@ -50,14 +65,22 @@ export class Terminal extends Component<Props, State> {
     }
 
     @bind
-    handlePostMessage(event: MessageEvent) {
+    async handlePostMessage(event: MessageEvent) {
         // Parse the message - expecting format like "?arg=type&arg=token&arg=..."
         if (typeof event.data === 'string' && event.data.startsWith('?')) {
             const params = new URLSearchParams(event.data.substring(1));
             const args = params.getAll('arg');
             if (args.length > 0) {
                 console.log('[ttyd] Received args via postMessage:', args);
+
+                // Set the arguments in xterm
                 this.xterm.setArgsFromPostMessage(args);
+
+                // If we're waiting for postMessage, initialize the terminal now
+                if (this.props.waitForPostMessage && !this.state.terminalInitialized) {
+                    console.log('[ttyd] Initializing terminal after receiving postMessage');
+                    await this.initializeTerminal();
+                }
             }
         }
     }

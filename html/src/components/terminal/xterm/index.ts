@@ -133,10 +133,37 @@ export class Xterm {
         console.log('[ttyd] Setting args from postMessage:', args);
         this.postMessageArgs = args;
 
-        // If args include a token (typically the second arg), set it
-        if (args.length >= 2) {
-            this.token = args[1];
-            console.log('[ttyd] Token set from postMessage');
+        // Parse arguments in format "arg=value" and add them to clientOptions
+        // The arguments string should be like "arg=abc&arg=983uyin&..."
+        // which is already parsed as an array of individual arg values
+        const argsString = args.join('&');
+        console.log('[ttyd] Parsing args string:', argsString);
+
+        // Parse the arguments as URL parameters and apply to clientOptions
+        const params = new URLSearchParams(argsString);
+        for (const [key, value] of params.entries()) {
+            // Add each parameter to clientOptions
+            const currentValue = this.options.clientOptions[key];
+
+            if (currentValue !== undefined) {
+                // Type conversion based on existing value type
+                switch (typeof currentValue) {
+                    case 'boolean':
+                        this.options.clientOptions[key] = value === 'true' || value === '1';
+                        break;
+                    case 'number':
+                        this.options.clientOptions[key] = Number.parseInt(value, 10);
+                        break;
+                    default:
+                        this.options.clientOptions[key] = value;
+                        break;
+                }
+                console.log(`[ttyd] Updated clientOptions.${key} = ${this.options.clientOptions[key]}`);
+            } else {
+                // Add new option as string
+                this.options.clientOptions[key] = value;
+                console.log(`[ttyd] Added new clientOption ${key} = ${value}`);
+            }
         }
     }
 
