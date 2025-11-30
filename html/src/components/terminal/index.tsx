@@ -31,9 +31,16 @@ export class Terminal extends Component<Props, State> {
         if (!this.props.waitForPostMessage) {
             // Normal flow: initialize terminal immediately
             await this.initializeTerminal();
+        } else {
+            // When waiting for postMessage:
+            // 1. Refresh token and open WebSocket connection first
+            // 2. But DON'T open xterm UI yet
+            // 3. Wait for postMessage to arrive with arguments
+            // 4. Send arguments through WebSocket
+            // 5. Then open xterm UI
+            await this.xterm.refreshToken();
+            this.xterm.connect();
         }
-        // If waitForPostMessage is true, we wait for the postMessage event
-        // to trigger initialization via handlePostMessage
     }
 
     @bind
@@ -73,13 +80,18 @@ export class Terminal extends Component<Props, State> {
             if (args.length > 0) {
                 console.log('[ttyd] Received args via postMessage:', args);
 
-                // Set the arguments in xterm
-                this.xterm.setArgsFromPostMessage(args);
-
-                // If we're waiting for postMessage, initialize the terminal now
                 if (this.props.waitForPostMessage && !this.state.terminalInitialized) {
-                    console.log('[ttyd] Initializing terminal after receiving postMessage');
-                    await this.initializeTerminal();
+                    // Send arguments through WebSocket first
+                    console.log('[ttyd] Sending arguments through WebSocket');
+                    this.xterm.sendArgsViaWebSocket(args);
+
+                    // Then open the xterm UI
+                    console.log('[ttyd] Opening xterm UI after sending arguments');
+                    this.xterm.open(this.container);
+                    this.setState({ terminalInitialized: true });
+                } else {
+                    // Normal postMessage handling (for already initialized terminals)
+                    this.xterm.setArgsFromPostMessage(args);
                 }
             }
         }

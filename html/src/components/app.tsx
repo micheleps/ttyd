@@ -10,11 +10,11 @@ const path = window.location.pathname.replace(/[/]+$/, '');
 const urlParams = new URLSearchParams(window.location.search);
 const waitForPostMessage = urlParams.get('waitForPostMessage') === 'true';
 
-// Remove client-only parameters from WebSocket URL
-const wsParams = new URLSearchParams(window.location.search);
-wsParams.delete('waitForPostMessage');
-const wsQueryString = wsParams.toString();
-const wsUrl = [protocol, '//', window.location.host, path, '/ws', wsQueryString ? '?' + wsQueryString : ''].join('');
+// When waitForPostMessage is true, don't send any parameters via WebSocket URL
+// Arguments will be sent through the WebSocket connection after receiving postMessage
+const wsUrl = waitForPostMessage
+    ? [protocol, '//', window.location.host, path, '/ws'].join('')
+    : [protocol, '//', window.location.host, path, '/ws', window.location.search].join('');
 const tokenUrl = [window.location.protocol, '//', window.location.host, path, '/token'].join('');
 const clientOptions = {
     rendererType: 'webgl',

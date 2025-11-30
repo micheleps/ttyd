@@ -168,6 +168,26 @@ export class Xterm {
     }
 
     @bind
+    public sendArgsViaWebSocket(args: string[]) {
+        console.log('[ttyd] Sending args via WebSocket:', args);
+
+        // Format: "arg=value1&arg=value2&..."
+        const argsMessage = args.join('&');
+        console.log('[ttyd] Formatted args message:', argsMessage);
+
+        // Send the arguments through the WebSocket
+        if (this.socket?.readyState === WebSocket.OPEN) {
+            this.socket.send(this.textEncoder.encode(argsMessage));
+            console.log('[ttyd] Arguments sent via WebSocket');
+
+            // Also update clientOptions locally
+            this.setArgsFromPostMessage(args);
+        } else {
+            console.error('[ttyd] WebSocket not open, cannot send arguments');
+        }
+    }
+
+    @bind
     public async refreshToken() {
         try {
             const resp = await fetch(this.options.tokenUrl);
