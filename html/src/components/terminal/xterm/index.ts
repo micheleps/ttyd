@@ -94,6 +94,7 @@ export class Xterm {
 
     private socket?: WebSocket;
     private token: string;
+    private postMessageArgs: string[] = [];
     private opened = false;
     private title?: string;
     private titleFixed?: string;
@@ -125,6 +126,18 @@ export class Xterm {
     @bind
     public sendFile(files: FileList) {
         this.zmodemAddon?.sendFile(files);
+    }
+
+    @bind
+    public setArgsFromPostMessage(args: string[]) {
+        console.log('[ttyd] Setting args from postMessage:', args);
+        this.postMessageArgs = args;
+
+        // If args include a token (typically the second arg), set it
+        if (args.length >= 2) {
+            this.token = args[1];
+            console.log('[ttyd] Token set from postMessage');
+        }
     }
 
     @bind
